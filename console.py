@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """ Console Module """
 import cmd
+import shlex
 import sys
 from models.base_model import BaseModel
 from models.__init__ import storage
@@ -118,23 +119,58 @@ class HBNBCommand(cmd.Cmd):
         if not args:
             print("** class name missing **")
             return
-        arguments = args.split()
+        arguments = shlex.split(args)
         class_name = arguments[0]
+
         try:
             if class_name not in HBNBCommand.classes:
                 print("** class doesn't exist **")
                 return
 
-            key, value = arguments[1].split("=")
-        
+            pairs = arguments[1:]
+            new_instance = HBNBCommand.classes[class_name]()
+
+            for pair in pairs:
+                key, value = pair.split("=")
+                value = value.replace('_', ' ')
+
+                try:
+                    setattr(new_instance, key, eval(value))
+                except (SyntaxError, NameError):
+                    setattr(new_instance, key, value)
+
+            print(new_instance.id)
+            storage.save()
+
+        except Exception as e:
+            print(f"Error: {e}")
+
+        '''
+        try:
+            if class_name not in HBNBCommand.classes:
+                print("** class doesn't exist **")
+                return
             new_instance = self.classes[class_name]()
-            setattr(new_instance, key, value)
+            for i in arguments[1:]:
+                key, value = shlex.split(i, posix=False).split("=")
+        
+                #if not hasattr(new_instance, key):
+                   # print ("** attribute does not exist **")
+                   # return
+                #elif hasattr(new_instance, key):
+                    #if value[0] == '"' and value[-1] == '"':
+                     #   value = value[1:-1].replace('_', ' ')
+                    #if '.' in value:
+                     #   value = float(value)
+                    #elif value.isdigit():
+                     #   value = int(value) 
+                setattr(new_instance, key, value)
         except Exception:
             pass
         new_instance.save()
         print(new_instance.id)
         storage.save()
-
+        '''
     def help_create(self):
         """ Help information for the create method """
         print("Creates a class of any type")
