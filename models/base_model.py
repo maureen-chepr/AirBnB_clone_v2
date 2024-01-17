@@ -38,6 +38,18 @@ class BaseModel:
                     setattr(self, key, value)
             self.__dict__.update(kwargs)
 
+        self.id = str(uuid4())
+        self.created_at = datetime.utcnow()
+        self.updated_at = self.created_at
+        
+        if kwargs:
+            for key, val in kwargs.items():
+                if key in ("created_at", "updated_at"):
+                    val = datetime.strptime(kwargs['updated_at'],
+                                            '%Y-%m-%dT%H:%M:%S.%f')
+                if "__class__" not in key:
+                    setattr(self, key, val)
+
     def __str__(self):
         """Returns a string representation of the instance"""
         cls = (str(type(self)).split('.')[-1]).split('\'')[0]
