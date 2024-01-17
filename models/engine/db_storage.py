@@ -40,7 +40,7 @@ class DBStorage:
                                                 )
         self.__engine = create_engine(db, pool_pre_ping=True)
         if HBNB_ENV == 'test':
-            Base.metadata.drop_all(self.__engine)
+            Base.metadata.drop_all(bind=self.__engine)
 
     def all(self, cls=None):
         """query on the current database session"""
@@ -73,11 +73,12 @@ class DBStorage:
     def reload(self):
         """create all tables in the database"""
         Base.metadata.create_all(self.__engine)
+        self.__session.close(self)
         session_db = sessionmaker(bind=self.__engine, expire_on_commit=False)
         Session = scoped_session(session_db)
         self.__session = Session()
 
     def close(self):
         """session closing"""
-        self.reload()
         self.__session.close()
+        
