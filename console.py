@@ -120,14 +120,17 @@ class HBNBCommand(cmd.Cmd):
             return
         arguments = args.split()
         class_name = arguments[0]
-        if class_name not in HBNBCommand.classes:
-            print("** class doesn't exist **")
-            return
+        try:
+            if class_name not in HBNBCommand.classes:
+                print("** class doesn't exist **")
+                return
 
-        key, value = arguments[1].split("=")
+            key, value = arguments[1].split("=")
         
-        new_instance = HBNBCommand.classes[class_name]()
-        setattr(new_instance, key, value)
+            new_instance = self.classes[class_name]()
+            setattr(new_instance, key, value)
+        except Exception:
+            pass
         new_instance.save()
         print(new_instance.id)
         storage.save()
