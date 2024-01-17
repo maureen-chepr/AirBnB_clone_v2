@@ -63,17 +63,15 @@ class BaseModel:
 
     def to_dict(self):
         """Convert instance into dict format"""
-        dictionary = {}
-        dictionary.update(self.__dict__)
-        try:
-            dictionary.pop('_sa_instance_state', None)
-        except Exception:
-            pass
-        dictionary.update({'__class__':
-                          (str(type(self)).split('.')[-1]).split('\'')[0]})
-        dictionary['created_at'] = self.created_at.isoformat()
-        dictionary['updated_at'] = self.updated_at.isoformat()
-        return dictionary
+        dicto = self.__dict__.copy()
+        if "created_at" in dicto:
+            dicto["created_at"] = dicto["created_at"].strftime(time)
+        if "updated_at" in dicto:
+            dicto["updated_at"] = dicto["updated_at"].strftime(time)
+        dicto["__class__"] = self.__class__.__name__
+        if "_sa_instance_state" in dicto:
+            del dicto["_sa_instance_state"]
+        return dicto
 
     def delete(self):
         """delete the current instance from the storage"""

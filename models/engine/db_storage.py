@@ -44,18 +44,21 @@ class DBStorage:
 
     def all(self, cls=None):
         """query on the current database session"""
-        dict_rep = {}
-        if cls is None:
-            for clas in all_classes:
-                clas = eval(clas)
-                for instance in self.__session.query(clas).all():
-                    key = instance.__class__.__name__ + '.' + instance.id
-                    dict_rep[key] = instance
+        if cls:
+            objs = self.__session.query(all_classes[cls])
         else:
-            for instance in self.__session.query(cls).all():
-                key = instance.__class__.__name__ + '.' + instance.id
-                dict_rep[key] = instance
-        return dict_rep
+            objs = self.__session.query(State).all()
+            objs += self.__session.query(City).all()
+            objs += self.__session.query(User).all()
+            objs += self.__session.query(Place).all()
+            objs += self.__session.query(Amenity).all()
+            objs += self.__session.query(Review).all()
+
+        dicto = {}
+        for obj in objs:
+            k = '{}.{}'.format(type(obj).__name__, obj.id)
+            dicto[k] = obj
+        return dicto
 
     def new(self, obj):
         """add the object to the current database session"""
@@ -73,12 +76,11 @@ class DBStorage:
     def reload(self):
         """create all tables in the database"""
         Base.metadata.create_all(self.__engine)
-        self.__session.close(self)
         session_db = sessionmaker(bind=self.__engine, expire_on_commit=False)
         Session = scoped_session(session_db)
         self.__session = Session()
 
     def close(self):
         """session closing"""
-        self.__session.close()
+        self.__session.remove()
         
