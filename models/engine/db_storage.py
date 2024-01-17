@@ -13,6 +13,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from os import getenv
 
+all_classes = {
+               'BaseModel': BaseModel, 'User': User, 'Place': Place,
+               'State': State, 'City': City, 'Amenity': Amenity,
+               'Review': Review
+              }
+
 
 class DBStorage:
     """class DBstorage that manages storage"""
@@ -40,7 +46,7 @@ class DBStorage:
         """query on the current database session"""
         dict_rep = {}
         if cls is None:
-            for clas in self.all_classes:
+            for clas in all_classes:
                 clas = eval(clas)
                 for instance in self.__session.query(clas).all():
                     key = instance.__class__.__name__ + '.' + instance.id
