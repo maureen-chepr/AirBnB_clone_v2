@@ -13,6 +13,10 @@ from sqlalchemy import (create_engine)
 from sqlalchemy.orm import scoped_session, sessionmaker
 from os import getenv
 
+all_classes = {"User": User, "BaseModel": BaseModel,
+                  "Place": Place, "State": State,
+                  "City": City, "Amenity": Amenity,
+                  "Review": Review}
 
 class DBStorage:
     """class DBstorage that manages storage"""
@@ -40,8 +44,22 @@ class DBStorage:
 
     def all(self, cls=None):
         """query on the current database session"""
+        if not self.__session:
+            self.reload()
 
-        dict_rep = {}
+        objects = {}
+        if isinstance(cls, str):
+            cls = all_classes.get(cls, None)
+
+        query_classes = [cls] if cls else all_classes.values()
+
+        for query_cls in query_classes:
+            for obj in self.__session.query(query_cls):
+                key = f"{obj.__class__.__name__}.{obj.id}"
+                objects[key] = obj
+        return objects
+
+        ''' dict_rep = {}
         if cls is None:
             for clas in self.all_classes:
                 clas = eval(clas)
@@ -53,7 +71,7 @@ class DBStorage:
                 key = instance.__class__.__name__ + '.' + instance.id
                 dict_rep[key] = instance
         return dict_rep
-
+'''
     def new(self, obj):
         """add the object to the current database session"""
         self.__session.add(obj)

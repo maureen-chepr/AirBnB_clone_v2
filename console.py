@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 """ Console Module """
 import cmd
+from datetime import datetime
+import uuid
+from os import getenv
 import shlex
 import sys
 from models.engine.db_storage import DBStorage
@@ -131,19 +134,36 @@ class HBNBCommand(cmd.Cmd):
                 return
 
             pairs = arguments[1:]
-            new_instance = HBNBCommand.classes[class_name]()
-
+            #new_instance = HBNBCommand.classes[class_name]()
+            obj_kwargs = {}
             for pair in pairs:
                 key, value = pair.split("=")
                 value = value.replace('_', ' ')
 
                 try:
-                    setattr(new_instance, key, eval(value))
+                    obj_kwargs[key] = eval(value)
+                    #setattr(new_instance, key, eval(value))
                 except (SyntaxError, NameError):
-                    setattr(new_instance, key, value)
+                    obj_kwargs[key] = value
+                    #setattr(new_instance, key, value)
 
-            print(new_instance.id)
-            storage.save()
+            if getenv('HBNB_TYPE_STORAGE') == 'db':
+                if 'id' not in obj_kwargs:
+                    obj_kwargs['id'] = str(uuid.uuid4())
+                if 'created_at' not in obj_kwargs:
+                    obj_kwargs['created_at'] = str(datetime.now().isoformat())
+                if 'updated_at' not in obj_kwargs:
+                    obj_kwargs['updated_at'] = str(datetime.now().isoformat())
+
+                new_instance = HBNBCommand.classes[class_name](**obj_kwargs)
+                new_instance.save()
+                print(new_instance.id)
+            else:
+                new_instance = HBNBCommand.classes[class_name]()
+                for key, value in obj_kwargs.items():
+                    setattr(new_instance, key, value)
+                new_instance.save()
+                print(new_instance.id)
 
         except Exception as e:
             print(f"Error: {e}")
@@ -256,26 +276,15 @@ class HBNBCommand(cmd.Cmd):
             if args not in HBNBCommand.classes:
                 print("** class doesn't exist **")
                 return
-            if isinstance(storage, FileStorage):
-                objects_dict = storage._FileStorage__objects
-            elif isinstance(storage, DBStorage):
-                objects_dict = storage.all()
-            else:
-                 print("** Unknown storage type **")
-                 return
-            for k, v in storage._FileStorage__objects.items():
+            objects = storage.all(HBNBCommand.classes[args])
+            for k, v in objects.items():
                 if k.split('.')[0] == args:
                     print_list.append(str(v))
         else:
-            if isinstance(storage, FileStorage):
-                objects_dict = storage._FileStorage__objects
-            elif isinstance(storage, DBStorage):
-                objects_dict = storage.all()
-            else:
-                print("** Unknown storage type **")
-                return
-            for k, v in storage._FileStorage__objects.items():
-                print_list.append(str(v))
+            for cls_name in HBNBCommand.classes:
+                objects = storage.all(HBNBCommand.classes[cls_name])
+                for k,v in objects.items():
+                    print_list.append(str(v))
 
         print(print_list)
 
