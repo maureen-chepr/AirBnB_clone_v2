@@ -4,16 +4,14 @@ from models.base_model import BaseModel, Base
 from sqlalchemy import Column, String, ForeignKey, Integer, Float
 from sqlalchemy.orm import relationship
 from models.review import Review
-import os
-
+from os import getenv
 
 class Place(BaseModel, Base):
     """ A place to stay """
-    if os.getenv ('HBNB_TYPE_STORAGE') == 'db':
-        __tablename__ = "places"
-        reviews = relationship("Review", passive_deletes=True, backref="place")
-        city_id = Column(String(60), ForeignKey('cities.id'), nullable=False)
-        user_id = Column(String(60), ForeignKey('users.id'), nullable=False)
+    __tablename__ = "places"
+    if getenv ('HBNB_TYPE_STORAGE') == 'db':
+        city_id = Column(String(60), ForeignKey("cities.id"), nullable=False)
+        user_id = Column(String(60), ForeignKey("users.id"), nullable=False)
         name = Column(String(128), nullable=False)
         description = Column(String(1024), nullable=False)
         number_rooms = Column(Integer, nullable=False, default=0)
@@ -22,6 +20,7 @@ class Place(BaseModel, Base):
         price_by_night = Column(Integer, nullable=False,default=0)
         latitude = Column(Float, nullable=True)
         longitude= Column(Float, nullable=True)
+        reviews = relationship("Review", backref="place", cascade="delete")
 
     else:
         city_id = ""
@@ -35,3 +34,16 @@ class Place(BaseModel, Base):
         latitude = 0.0
         longitude = 0.0
         amenity_ids = []
+
+        @property
+        def reviews(self):
+            """
+                getter attribute reviews that returns
+                the list of Review instances
+            """
+            from models import storage
+            rev_lst = []
+            for review in list(models.storage.all(Review).values()):
+                if review.place_id == self.id:
+                    rev_lst.append(review)
+            return rev_lst
