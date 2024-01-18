@@ -4,6 +4,8 @@ from models.base_model import BaseModel, Base
 from sqlalchemy import String, Column
 from os import getenv
 from sqlalchemy.orm import relationship
+from models.review import Review
+from models.review import Review
 
 
 class User(BaseModel, Base):
@@ -17,6 +19,8 @@ class User(BaseModel, Base):
         reviews = relationship('Review',
                                cascade='all,delete-orphan',
                                backref='user')
+        places = relationship('Place', backref='user', cascade='all, delete-orphan')
+
     else:
         email = ''
         password = ''
