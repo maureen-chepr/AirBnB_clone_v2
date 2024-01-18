@@ -9,21 +9,16 @@ from models.place import Place
 from models.amenity import Amenity
 from models.review import Review
 import sqlalchemy
-from sqlalchemy import create_engine
+from sqlalchemy import (create_engine)
 from sqlalchemy.orm import scoped_session, sessionmaker
 from os import getenv
-
-all_classes = {
-               'BaseModel': BaseModel, 'User': User, 'Place': Place,
-               'State': State, 'City': City, 'Amenity': Amenity,
-               'Review': Review
-              }
 
 
 class DBStorage:
     """class DBstorage that manages storage"""
     __engine = None
     __session = None
+    all_classes = ["State", "City", "User", "Place", "Review"]
 
     def __init__(self):
         """init for database connection"""
@@ -39,26 +34,25 @@ class DBStorage:
                                             HBNB_MYSQL_DB
                                                 )
         self.__engine = create_engine(db, pool_pre_ping=True)
+        Base.metadata.create_all(self.__engine)
         if HBNB_ENV == 'test':
             Base.metadata.drop_all(bind=self.__engine)
 
     def all(self, cls=None):
         """query on the current database session"""
-        if cls:
-            objs = self.__session.query(all_classes[cls])
-        else:
-            objs = self.__session.query(State).all()
-            objs += self.__session.query(City).all()
-            objs += self.__session.query(User).all()
-            objs += self.__session.query(Place).all()
-            objs += self.__session.query(Amenity).all()
-            objs += self.__session.query(Review).all()
 
-        dicto = {}
-        for obj in objs:
-            k = '{}.{}'.format(type(obj).__name__, obj.id)
-            dicto[k] = obj
-        return dicto
+        dict_rep = {}
+        if cls is None:
+            for clas in self.all_classes:
+                clas = eval(clas)
+                for instance in self.__session.query(clas).all():
+                    key = instance.__class__.__name__ + '.' + instance.id
+                    dict_rep[key] = instance
+        else:
+            for instance in self.__session.query(cls).all():
+                key = instance.__class__.__name__ + '.' + instance.id
+                dict_rep[key] = instance
+        return dict_rep
 
     def new(self, obj):
         """add the object to the current database session"""
@@ -82,5 +76,4 @@ class DBStorage:
 
     def close(self):
         """session closing"""
-        self.__session.remove()
-        
+        self.__session.close()

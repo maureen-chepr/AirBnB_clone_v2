@@ -3,8 +3,11 @@
 import cmd
 import shlex
 import sys
+from models.engine.db_storage import DBStorage
+from models.engine.file_storage import FileStorage
 from models.base_model import BaseModel
-from models.__init__ import storage
+from models import storage
+# from models.__init__ import storage
 from models.user import User
 from models.place import Place
 from models.state import State
@@ -244,6 +247,8 @@ class HBNBCommand(cmd.Cmd):
 
     def do_all(self, args):
         """ Shows all objects, or all objects of a class"""
+        from models.engine.db_storage import DBStorage
+        from models.engine.file_storage import FileStorage
         print_list = []
 
         if args:
@@ -251,10 +256,24 @@ class HBNBCommand(cmd.Cmd):
             if args not in HBNBCommand.classes:
                 print("** class doesn't exist **")
                 return
+            if isinstance(storage, FileStorage):
+                objects_dict = storage._FileStorage__objects
+            elif isinstance(storage, DBStorage):
+                objects_dict = storage.all()
+            else:
+                 print("** Unknown storage type **")
+                 return
             for k, v in storage._FileStorage__objects.items():
                 if k.split('.')[0] == args:
                     print_list.append(str(v))
         else:
+            if isinstance(storage, FileStorage):
+                objects_dict = storage._FileStorage__objects
+            elif isinstance(storage, DBStorage):
+                objects_dict = storage.all()
+            else:
+                print("** Unknown storage type **")
+                return
             for k, v in storage._FileStorage__objects.items():
                 print_list.append(str(v))
 
