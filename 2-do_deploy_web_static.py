@@ -8,7 +8,6 @@ from fabric.api import *
 
 env.hosts = ['100.26.254.70', '34.201.174.4']
 
-
 def do_deploy(archive_path):
     """distributes an archive to your web servers"""
     if os.path.exists(archive_path) is False:
@@ -19,7 +18,7 @@ def do_deploy(archive_path):
     upload_path = '/tmp/' + archive_name
     put(archive_path, upload_path)
     run('mkdir -p ' + remote_path)
-    run('tar -xzf /tmp/{} -C {}/'.format(arch_name, remote_path))
+    run('tar -xzf /tmp/{} -C {}/'.format(archive_name, remote_path))
     run('rm {}'.format(upload_path))
     mv = 'mv ' + remote_path + '/web_static/* ' + remote_path + '/'
     run(mv)
