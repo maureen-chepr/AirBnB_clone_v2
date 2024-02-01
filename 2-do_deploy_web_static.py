@@ -9,19 +9,6 @@ from fabric.api import *
 env.hosts = ['100.26.254.70', '34.201.174.4']
 
 
-def do_pack():
-    """return archive path if generated"""
-    local(" mkdir -p versions")
-    date = datetime.now().strftime("%Y%m%d%H%M%S")
-    file_path = "versions/web_static_{}.tgz".format(date)
-    gzip_arch = local("tar -cvzf {} web_static".format(file_path))
-
-    if gzip_arch.succeeded:
-        return file_path
-    else:
-        return None
-
-
 def do_deploy(archive_path):
     """distributes an archive to your web servers"""
     if os.path.exsists(archive_path) is False:
