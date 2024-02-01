@@ -1,29 +1,26 @@
 #!/usr/bin/python3
 """
-    Deletes out-of-date archives
+    deletes out-of-date archives
 """
-from fabric.api import *
 import os
+from fabric.api import *
 
-env.hosts = ['100.26.254.70', '34.201.174.4']
+env.hosts = ["104.196.168.90", "35.196.46.172"]
+
 
 def do_clean(number=0):
     """
-    Deletes unnecessary archives in the versions and /data/web_static/releases folders
+        Delete out-of-date archives.
     """
-    number = int(number)
-    if number < 0:
-        return
+    number = 1 if int(number) == 0 else int(number)
 
-    # Local cleanup (versions folder)
-    local_arch = local('ls -1t versions | grep .tgz | tail -n +{}'.format(number + 1), capture=True)
-    with lcd('versions'):
-        for archive in local_arch.split('\n'):
-            local('rm -f {}'.format(archive))
+    archs = sorted(os.listdir("versions"))
+    [archs.pop() for i in range(number)]
+    with lcd("versions"):
+        [local("rm ./{}".format(a)) for a in archs]
 
-    # Remote cleanup (web servers)
-    remote_archives = run('ls -1t /data/web_static/releases | grep web_static_ | tail -n +{}'.format(number + 1))
-    for archive in remote_archives.split('\n'):
-        if archive.strip() != "":
-            with cd('/data/web_static/releases'):
-                run('rm -rf {}'.format(archive))
+    with cd("/data/web_static/releases"):
+        archs = run("ls -tr").split()
+        archs = [a for a in archs if "web_static_" in a]
+        [archs.pop() for i in range(number)]
+        [run("rm -rf ./{}".format(a)) for a in archs]
