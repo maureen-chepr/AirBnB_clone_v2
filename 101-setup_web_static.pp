@@ -1,80 +1,48 @@
-# setting up web servers for web_static deployment
+# setting up web static using puppet
 
-# Update the package index
-package { 'update':
-  ensure => latest,
-  command => '/usr/bin/apt-get update',
+exec {'apt-get-update':
+  command => '/usr/bin/apt-get update'
 }
 
-# Upgrade all installed packages
-package { 'upgrade':
-  ensure => latest,
-  command => '/usr/bin/apt-get upgrade -y',
-  require => Package['update'],
+package {'apache2.2-common':
+  ensure  => 'absent',
+  require => Exec['apt-get-update']
 }
 
-# Install Nginx
 package { 'nginx':
-  ensure => installed,
+  ensure  => 'installed',
+  require => Package['apache2.2-common']
 }
 
-# Create necessary directories
-file { '/data/web_static/':
-  ensure => directory,
+service {'nginx':
+  ensure  =>  'running',
+  require => file_line['LOCATION SETUP']
 }
 
-file { '/data/web_static/releases/test/':
-  ensure => directory,
+file { ['/data', '/data/web_static', '/data/web_static/shared', '/data/web_static/releases', '/data/web_static/releases/test'] :
+  ensure  => 'directory',
+  owner   => 'ubuntu',
+  group   => 'ubuntu',
+  require =>  Package['nginx']
 }
 
-file { '/data/web_static/shared/':
-  ensure => directory,
-}
-
-# Create index.html with content
 file { '/data/web_static/releases/test/index.html':
-  ensure  => present,
-  content => 'Holberton School',
+  ensure  => 'present',
+  content => 'Holberton School,
+  require =>  Package['nginx']
 }
 
-# Create symbolic link
 file { '/data/web_static/current':
-  ensure => link,
+  ensure => 'link',
   target => '/data/web_static/releases/test',
+  force  => true
 }
 
-# Change ownership of the /data/ directory
-exec { 'change_ownership':
-  command => '/bin/chown -R ubuntu:ubuntu /data/',
-  path    => ['/bin', '/usr/bin'],
-}
-
-# Add Nginx configuration for /hbnb_static
-file_line { 'nginx_hbnb_static_config':
-  path    => '/etc/nginx/sites-available/default',
-  line    => '        location /hbnb_static/ {',
-  match   => '^(\s+)location / {',
-  after   => '^(\s+)location / {',
+file_line { 'LOCATION SETUP ':
+  ensure  => 'present',
+  path    => '/etc/nginx/sites-enabled/default',
+  line    => 'location /hbnb_static/ { alias /data/web_static/current/; autoindex off; } location / { ',
+  match   => '^\s+location+',
   require => Package['nginx'],
   notify  => Service['nginx'],
 }
-
-file_line { 'nginx_alias_config':
-  path    => '/etc/nginx/sites-available/default',
-  line    => '                alias /data/web_static/current/;',
-  match   => '^(\s+)}',
-  after   => '^(\s+)}',
-  require => Package['nginx'],
-  notify  => Service['nginx'],
-}
-
-# Restart Nginx
-service { 'nginx':
-  ensure => running,
-  enable => true,
-}
-
-# Notify Nginx restart when configuration changes
-Service['nginx'] -> File_line['nginx_hbnb_static_config']
-Service['nginx'] -> File_line['nginx_alias_config']
-
