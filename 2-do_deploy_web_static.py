@@ -7,6 +7,8 @@ from datetime import datetime
 from fabric.api import *
 
 env.hosts = ['100.26.254.70', '34.201.174.4']
+env.user = "ubuntu"
+env.key_filename = "~/.ssh/school"
 
 
 def do_pack():
@@ -29,13 +31,14 @@ def do_deploy(archive_path):
     arch_mod = archive_name.split(".")[0]
     remote_path = "/data/web_static/releases/" + arch_mod
     upload_path = '/tmp/' + archive_name
-    put(archive_path, upload_path)
-    run('mkdir -p ' + remote_path)
-    run('tar -xzf /tmp/{} -C {}/'.format(archive_name, remote_path))
-    run('rm {}'.format(upload_path))
+    put(archive_path, '/tmp/')
+    # put(archive_path, upload_path)
+    sudo('mkdir -p ' + remote_path)
+    sudo('tar -xzf /tmp/{} -C {}/'.format(archive_name, remote_path))
+    sudo('rm {}'.format(upload_path))
     mv = 'mv ' + remote_path + '/web_static/* ' + remote_path + '/'
-    run(mv)
-    run('rm -rf ' + remote_path + '/web_static')
-    run('rm -rf /data/web_static/current')
-    run('ln -s ' + remote_path + ' /data/web_static/current')
+    sudo(mv)
+    sudo('rm -rf ' + remote_path + '/web_static')
+    sudo('rm -rf /data/web_static/current')
+    sudo('ln -s ' + remote_path + ' /data/web_static/current')
     return True

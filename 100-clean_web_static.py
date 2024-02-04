@@ -5,7 +5,9 @@
 import os
 from fabric.api import *
 
-env.hosts = ["104.196.168.90", "35.196.46.172"]
+env.hosts = ['100.26.254.70', '34.201.174.4']
+env.users = "ubuntu"
+env.key_filename = "~/.ssh/school"
 
 
 def do_clean(number=0):
@@ -24,3 +26,4 @@ def do_clean(number=0):
         archs = [a for a in archs if "web_static_" in a]
         [archs.pop() for i in range(number)]
         [run("rm -rf ./{}".format(a)) for a in archs]
+
